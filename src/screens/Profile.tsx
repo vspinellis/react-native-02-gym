@@ -1,15 +1,62 @@
-import { VStack, Text, ScrollView, Center, Skeleton, Heading } from 'native-base';
+import {
+  VStack,
+  Text,
+  ScrollView,
+  Center,
+  Skeleton,
+  Heading,
+  useToast
+} from 'native-base';
 import ScreenHeader from '../components/ScreenHeader';
 import { UserPhoto } from '../components/UserPhoto';
 import { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 const PHOTO_SIZE = 33;
 
 export default function Profile() {
   const [photoIsLoading, setPhotoIsLoading] = useState(false);
+  const [userPhoto, setUserPhoto] = useState('https://github.com/vspinellis.png');
+  const toast = useToast();
+  async function handleUserPhotoSelect() {
+    setPhotoIsLoading(true);
+    try {
+      const photoSelected = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        aspect: [4, 4],
+        selectionLimit: 1,
+        allowsEditing: true
+      });
+
+      if (photoSelected.canceled) {
+        return;
+      }
+      const photoInfo = (await FileSystem.getInfoAsync(
+        photoSelected.assets[0].uri
+      )) as FileSystem.FileInfo & { size: number };
+
+      if (photoInfo.size / 1024 / 1024 > 3) {
+        toast.show({
+          title: 'Escolha uma imagem de até 3MB',
+          placement: 'top',
+          bgColor: 'red.500'
+        });
+        return;
+      }
+
+      setUserPhoto(photoSelected.assets[0].uri);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPhotoIsLoading(false);
+    }
+  }
+
   return (
     <VStack>
       <ScreenHeader title='Perfil' />
@@ -24,12 +71,12 @@ export default function Profile() {
             isLoaded={!photoIsLoading}
           >
             <UserPhoto
-              source={{ uri: 'https://github.com/vspinellis.png' }}
+              source={{ uri: userPhoto }}
               alt='Foto do usuário'
               size={PHOTO_SIZE}
             />
           </Skeleton>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleUserPhotoSelect}>
             <Text color='green.500' fontWeight='bold' fontSize='md' mt={2} mb={8}>
               Alterar Foto
             </Text>
