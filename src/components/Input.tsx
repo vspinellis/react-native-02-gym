@@ -1,5 +1,4 @@
 import { Input as NativeBaseInput, IInputProps } from 'native-base';
-import { border } from 'native-base/lib/typescript/theme/styled-system';
 
 export function Input({ ...rest }: IInputProps) {
   return (
