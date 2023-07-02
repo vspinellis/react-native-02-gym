@@ -4,12 +4,42 @@ import LogoSvg from '../assets/logo.svg';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
+import { useForm, Controller } from 'react-hook-form';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+type FormDataProps = {
+  name: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+};
+
+const signUpSchema = Yup.object({
+  name: Yup.string().required('Informe o nome'),
+  email: Yup.string().required('Informe o email').email('Informe o email válido'),
+  password: Yup.string().required('Informe a senha').min(6, 'Mínimo de 6 caracteres'),
+  password_confirm: Yup.string()
+    .required('Confirme a senha')
+    .oneOf([Yup.ref('password'), ''], 'As senhas não são iguais')
+});
 
 export function SignUp() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FormDataProps>({
+    resolver: yupResolver(signUpSchema)
+  });
   const navigation = useNavigation();
 
   function handleGoBack() {
     navigation.goBack();
+  }
+
+  function handleSignUp(data: FormDataProps) {
+    console.log(data);
   }
 
   return (
@@ -33,13 +63,64 @@ export function SignUp() {
             Crie sua conta
           </Heading>
 
-          <Input placeholder='Nome' />
-          <Input placeholder='E-mail' keyboardType='email-address' />
-          <Input placeholder='Senha' secureTextEntry />
-          <Button title='Criar e acessar' />
+          <Controller
+            control={control}
+            name='name'
+            render={({ field: { onChange, value } }) => (
+              <Input
+                onChangeText={onChange}
+                errorMessage={errors.name?.message}
+                value={value}
+                placeholder='Nome'
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='email'
+            render={({ field: { onChange, value } }) => (
+              <Input
+                onChangeText={onChange}
+                errorMessage={errors.email?.message}
+                value={value}
+                placeholder='Email'
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='password'
+            render={({ field: { onChange, value } }) => (
+              <Input
+                onChangeText={onChange}
+                errorMessage={errors.password?.message}
+                value={value}
+                placeholder='Senha'
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='password_confirm'
+            render={({ field: { onChange, value } }) => (
+              <Input
+                onChangeText={onChange}
+                value={value}
+                placeholder='Confirmação da senha'
+                errorMessage={errors.password_confirm?.message}
+                onSubmitEditing={handleSubmit(handleSignUp)}
+                returnKeyType='send'
+              />
+            )}
+          />
+
+          <Button title='Criar e acessar' onPressIn={handleSubmit(handleSignUp)} />
         </Center>
         <Button
-          mt={24}
+          mt={12}
           onPress={handleGoBack}
           title='Voltar para o login'
           variant='outline'
