@@ -1,13 +1,4 @@
-import {
-  Center,
-  Image,
-  Text,
-  VStack,
-  Heading,
-  ScrollView,
-  Icon,
-  useToast
-} from 'native-base';
+import { Center, Image, Text, VStack, Heading, ScrollView, useToast } from 'native-base';
 import BackgroundImg from '../assets/background.png';
 import LogoSvg from '../assets/logo.svg';
 import { Input } from '../components/Input';
@@ -18,6 +9,8 @@ import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { API } from '../service/api';
 import { AppError } from '../utils/AppError';
+import { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 type FormDataProps = {
   name: string;
@@ -45,6 +38,8 @@ export function SignUp() {
   });
   const toast = useToast();
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
 
   function handleGoBack() {
     navigation.goBack();
@@ -52,11 +47,13 @@ export function SignUp() {
 
   async function handleSignUp({ name, email, password }: FormDataProps) {
     try {
-      const { data } = await API.post('/users', {
+      setIsLoading(true);
+      await API.post('/users', {
         name,
         email,
         password
       });
+      await signIn(email, password);
     } catch (error) {
       const isAppError = error instanceof AppError;
       toast.show({
@@ -145,7 +142,11 @@ export function SignUp() {
             )}
           />
 
-          <Button title='Criar e acessar' onPressIn={handleSubmit(handleSignUp)} />
+          <Button
+            title='Criar e acessar'
+            isLoading={isLoading}
+            onPressIn={handleSubmit(handleSignUp)}
+          />
         </Center>
         <Button
           mt={12}

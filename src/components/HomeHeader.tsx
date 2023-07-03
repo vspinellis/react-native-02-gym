@@ -2,14 +2,17 @@ import { HStack, Heading, Icon, Text, VStack } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UserPhoto } from './UserPhoto';
 import { TouchableOpacity } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
+import userPhotoDefault from '../assets/userPhotoDefault.png';
 
 export function HomeHeader() {
+  const { user, signOut } = useAuth();
   return (
     <HStack bg='gtay.600' pt={16} pb={5} px={8} alignItems='center'>
       <UserPhoto
         size={16}
         alt='Imagem de perfil do usuário no github'
-        source={{ uri: 'https://github.com/vspinellis.png' }}
+        source={user.avatar ? { uri: user.avatar } : userPhotoDefault}
         mr={4}
       />
       <VStack flex={1}>
@@ -17,11 +20,11 @@ export function HomeHeader() {
           Olá
         </Text>
         <Heading color='gray.100' fontSize='md' fontFamily='heading'>
-          Rodrigo
+          {user.name}
         </Heading>
       </VStack>
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={signOut}>
         <Icon as={MaterialIcons} size={7} name='logout' color='gray.200' />
       </TouchableOpacity>
     </HStack>
