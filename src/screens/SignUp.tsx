@@ -1,4 +1,13 @@
-import { Center, Image, Text, VStack, Heading, ScrollView, Icon } from 'native-base';
+import {
+  Center,
+  Image,
+  Text,
+  VStack,
+  Heading,
+  ScrollView,
+  Icon,
+  useToast
+} from 'native-base';
 import BackgroundImg from '../assets/background.png';
 import LogoSvg from '../assets/logo.svg';
 import { Input } from '../components/Input';
@@ -7,6 +16,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { API } from '../service/api';
+import { AppError } from '../utils/AppError';
 
 type FormDataProps = {
   name: string;
@@ -32,14 +43,28 @@ export function SignUp() {
   } = useForm<FormDataProps>({
     resolver: yupResolver(signUpSchema)
   });
+  const toast = useToast();
   const navigation = useNavigation();
 
   function handleGoBack() {
     navigation.goBack();
   }
 
-  function handleSignUp(data: FormDataProps) {
-    console.log(data);
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      const { data } = await API.post('/users', {
+        name,
+        email,
+        password
+      });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      toast.show({
+        title: isAppError ? error.message : 'Não foi possível criar a conta',
+        placement: 'top',
+        bgColor: 'red.500'
+      });
+    }
   }
 
   return (
@@ -82,6 +107,7 @@ export function SignUp() {
             render={({ field: { onChange, value } }) => (
               <Input
                 onChangeText={onChange}
+                autoCapitalize='none'
                 errorMessage={errors.email?.message}
                 value={value}
                 placeholder='Email'
@@ -95,6 +121,7 @@ export function SignUp() {
             render={({ field: { onChange, value } }) => (
               <Input
                 onChangeText={onChange}
+                secureTextEntry
                 errorMessage={errors.password?.message}
                 value={value}
                 placeholder='Senha'
@@ -109,6 +136,7 @@ export function SignUp() {
               <Input
                 onChangeText={onChange}
                 value={value}
+                secureTextEntry
                 placeholder='Confirmação da senha'
                 errorMessage={errors.password_confirm?.message}
                 onSubmitEditing={handleSubmit(handleSignUp)}

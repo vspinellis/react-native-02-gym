@@ -4,6 +4,7 @@ import { NativeBaseProvider } from 'native-base';
 import { Loading } from './src/components/Loading';
 import { THEME } from './src/theme';
 import { Router } from './src/routes';
+import { AuthContext } from './src/contexts/AuthContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -14,7 +15,18 @@ export default function App() {
   return (
     <NativeBaseProvider theme={THEME}>
       <StatusBar barStyle='light-content' translucent backgroundColor='transparent' />
-      {fontsLoaded ? <Router /> : <Loading />}
+      <AuthContext.Provider
+        value={{
+          user: {
+            id: '1',
+            avatar: '',
+            name: 'Marcos',
+            email: 'vspinellis@hotmail.com'
+          }
+        }}
+      >
+        {fontsLoaded ? <Router /> : <Loading />}
+      </AuthContext.Provider>
     </NativeBaseProvider>
   );
 }
