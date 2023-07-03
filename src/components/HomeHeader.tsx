@@ -4,6 +4,7 @@ import { UserPhoto } from './UserPhoto';
 import { TouchableOpacity } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import userPhotoDefault from '../assets/userPhotoDefault.png';
+import { API } from '../service/api';
 
 export function HomeHeader() {
   const { user, signOut } = useAuth();
@@ -12,7 +13,11 @@ export function HomeHeader() {
       <UserPhoto
         size={16}
         alt='Imagem de perfil do usuário no github'
-        source={user.avatar ? { uri: user.avatar } : userPhotoDefault}
+        source={
+          user.avatar
+            ? { uri: `${API.defaults.baseURL}/avatar/${user.avatar}` }
+            : userPhotoDefault
+        }
         mr={4}
       />
       <VStack flex={1}>

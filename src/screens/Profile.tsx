@@ -21,6 +21,7 @@ import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { API } from '../service/api';
 import { AppError } from '../utils/AppError';
+import userPhotoDefault from '../assets/userPhotoDefault.png';
 
 const PHOTO_SIZE = 33;
 
@@ -61,13 +62,12 @@ export default function Profile() {
     handleSubmit,
     formState: { errors }
   } = useForm<FormDataProps>({
-    resolver: yupResolver(profileSchema),
+    // resolver: yupResolver(profileSchema),
     defaultValues: {
       name: user.name,
       email: user.email
     }
   });
-  const [userPhoto, setUserPhoto] = useState('https://github.com/vspinellis.png');
   const toast = useToast();
 
   async function handleUserPhotoSelect() {
@@ -97,7 +97,36 @@ export default function Profile() {
         return;
       }
 
-      setUserPhoto(photoSelected.assets[0].uri);
+      const fileExtension = photoSelected.assets[0].uri.split('.').pop();
+      const photoFile = {
+        name: `${user.name}.${fileExtension}`.toLowerCase(),
+        uri: photoSelected.assets[0].uri,
+        type: `${photoSelected.assets[0].type}/${fileExtension}`
+      } as any;
+
+      const userPhotoUploadForm = new FormData();
+      userPhotoUploadForm.append('avatar', photoFile);
+
+      const avatarUpdatedResponse = await API.patch(
+        '/users/avatar',
+        userPhotoUploadForm,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      const userUpdated = user;
+      userUpdated.avatar = avatarUpdatedResponse.data.avatar;
+
+      await updateUserProfile(userUpdated);
+
+      toast.show({
+        title: 'Foto atualizada',
+        placement: 'top',
+        bgColor: 'green.500'
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -148,7 +177,11 @@ export default function Profile() {
             isLoaded={!photoIsLoading}
           >
             <UserPhoto
-              source={{ uri: userPhoto }}
+              source={
+                user.avatar
+                  ? { uri: `${API.defaults.baseURL}/avatar/${user.avatar}` }
+                  : userPhotoDefault
+              }
               alt='Foto do usuário'
               size={PHOTO_SIZE}
             />
@@ -194,18 +227,26 @@ export default function Profile() {
           />
           <Controller
             name='password'
-            errorMessage={errors.password?.message}
             control={control}
             render={({ field: { value, onChange } }) => (
-              <Input bg='gray.600' placeholder='Nova senha' secureTextEntry />
+              <Input
+                errorMessage={errors.password?.message}
+                bg='gray.600'
+                placeholder='Nova senha'
+                secureTextEntry
+              />
             )}
           />
           <Controller
             name='confirm_password'
             control={control}
-            errorMessage={errors.confirm_password?.message}
             render={({ field: { value, onChange } }) => (
-              <Input bg='gray.600' placeholder='Confirme a nova senha' secureTextEntry />
+              <Input
+                errorMessage={errors.confirm_password?.message}
+                bg='gray.600'
+                placeholder='Confirme a nova senha'
+                secureTextEntry
+              />
             )}
           />
 
